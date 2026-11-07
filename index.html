@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hoguera</title>
+<meta name="description" content="Un santuario en ruinas con una hoguera. Otros pasaron antes que vos y dejaron mensajes en el piso. Homenaje a Dark Souls.">
+<meta property="og:title" content="Hoguera">
+<meta property="og:description" content="Otros pasaron antes que vos y dejaron mensajes en el piso.">
+<meta name="theme-color" content="#07080b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307080b'/%3E%3Cpath d='M16 5c3 6 7 8 7 14a7 7 0 0 1-14 0c0-4 3-5 3-9 2 2 3 3 4 5 1-3 0-6 0-10z' fill='%23e8893a'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --noche: #07080b;
+  --hueso: #ddd5c4;
+  --hueso-2: #a9a192;
+  --oro: #d8b46a;
+  --brasa: #f0a050;
+  --velo: rgba(5, 6, 8, .78);
+  --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; background: var(--noche); color: var(--hueso); overflow: hidden; }
+body { font-family: var(--serif); font-size: 19px; -webkit-font-smoothing: antialiased; touch-action: none; user-select: none; -webkit-user-select: none; }
+::selection { background: var(--oro); color: var(--noche); }
+canvas { display: block; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 1px solid var(--oro); outline-offset: 4px; }
+a { color: var(--hueso-2); text-underline-offset: 3px; text-decoration-color: rgba(216,180,106,.4); }
+a:hover { color: var(--oro); }
+.oculto { display: none !important; }
+
+/* portada */
+#portada, #pausa { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px 16px; background: radial-gradient(ellipse at 50% 60%, rgba(60,30,12,.35), transparent 60%), var(--noche); z-index: 10; }
+#pausa { background: var(--velo); }
+.portada-cuerpo { max-width: 34rem; display: grid; gap: 1.6rem; justify-items: center; }
+h1 { font-weight: 500; font-size: clamp(3.4rem, 12vw, 6rem); letter-spacing: .14em; text-transform: uppercase; line-height: 1; color: var(--hueso); text-indent: .14em; }
+.bajada { font-size: 1.25rem; line-height: 1.5; color: var(--hueso-2); text-wrap: balance; }
+.entrar { font-size: 1.35rem; letter-spacing: .3em; text-transform: uppercase; padding: .7rem 1.6rem .7rem 1.9rem; color: var(--oro); border-top: 1px solid rgba(216,180,106,.35); border-bottom: 1px solid rgba(216,180,106,.35); transition: color .3s, border-color .3s, letter-spacing .5s cubic-bezier(.16,1,.3,1); }
+.entrar:hover { color: #f1d69a; border-color: rgba(216,180,106,.8); letter-spacing: .36em; }
+.nota { font-size: 1rem; color: var(--hueso-2); display: flex; gap: .5rem; align-items: center; justify-content: center; flex-wrap: wrap; }
+.nota svg { width: 18px; height: 18px; flex: none; }
+.teclas { font-size: .95rem; color: #8a8478; display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center; }
+kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; border-radius: 3px; padding: 0 .35rem; color: var(--hueso-2); }
+.firma { position: fixed; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom)); font-size: .95rem; color: #8f897c; text-align: center; padding: 0 16px; }
+
+/* juego */
+#aviso { position: fixed; left: 50%; bottom: max(18vh, 110px); transform: translateX(-50%); font-size: 1.15rem; letter-spacing: .06em; padding: .55rem 2.4rem; white-space: nowrap; background: linear-gradient(90deg, transparent, rgba(5,6,8,.82) 18%, rgba(5,6,8,.82) 82%, transparent); color: var(--hueso); z-index: 4; }
+#aviso kbd { margin-right: .5rem; }
+#mensaje { position: fixed; left: 50%; bottom: max(18vh, 110px); transform: translateX(-50%); width: min(36rem, calc(100% - 32px)); text-align: center; padding: 1.1rem 2rem 1rem; background: linear-gradient(90deg, transparent, rgba(5,6,8,.86) 14%, rgba(5,6,8,.86) 86%, transparent); z-index: 4; display: grid; gap: .45rem; }
+#mensaje .texto { font-style: italic; font-size: 1.75rem; line-height: 1.2; color: #f3ead8; text-wrap: balance; }
+#mensaje .meta { font-size: .98rem; color: var(--hueso-2); display: flex; gap: 1.2rem; justify-content: center; align-items: center; flex-wrap: wrap; }
+#valorar { color: var(--oro); }
+#valorar[disabled] { color: #6f6a60; cursor: default; }
+#escribir-btn { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); font-size: 1rem; color: var(--hueso-2); padding: .5rem .2rem; z-index: 4; }
+#escribir-btn:hover { color: var(--oro); }
+#mira { position: fixed; left: 50%; top: 50%; width: 3px; height: 3px; margin: -1.5px; border-radius: 50%; background: rgba(221,213,196,.35); z-index: 3; pointer-events: none; }
+
+#fundido { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 6; transition: opacity 1.2s ease; }
+#titulo-grande { position: fixed; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; z-index: 7; pointer-events: none; opacity: 0; transition: opacity 1.4s ease; padding: 1.4rem 16px; background: linear-gradient(90deg, transparent, rgba(0,0,0,.6) 25%, rgba(0,0,0,.6) 75%, transparent); }
+#titulo-grande span { font-size: clamp(2rem, 7vw, 4.4rem); letter-spacing: .16em; text-transform: uppercase; color: var(--oro); }
+#titulo-grande small { display: block; font-size: 1.1rem; color: var(--hueso-2); margin-top: .5rem; font-style: italic; letter-spacing: .02em; text-transform: none; }
+
+/* escribir */
+#escribir { position: fixed; inset: 0; z-index: 8; background: rgba(4,5,7,.9); display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; touch-action: pan-y; }
+.escribir-cuerpo { width: min(44rem, 100%); display: grid; gap: 1.6rem; }
+.escribir-cuerpo h2 { font-weight: 500; font-size: 1.05rem; letter-spacing: .25em; text-transform: uppercase; color: var(--hueso-2); text-align: center; }
+#vista { font-style: italic; font-size: clamp(1.6rem, 5vw, 2.3rem); text-align: center; color: #f3ead8; min-height: 2.6em; display: grid; place-items: center; text-wrap: balance; line-height: 1.2; }
+#vista .hueco { color: #8a8478; }
+.columnas { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.6rem; }
+.lista { display: flex; flex-wrap: wrap; gap: .1rem .9rem; align-content: start; }
+.lista h3 { width: 100%; font-weight: 500; font-size: .9rem; letter-spacing: .2em; text-transform: uppercase; color: #8c8572; margin-bottom: .3rem; }
+.lista button { font-size: 1.12rem; padding: .25rem 0; color: var(--hueso-2); border-bottom: 1px solid transparent; transition: color .2s; }
+.lista button:hover { color: var(--hueso); }
+.lista button[aria-pressed="true"] { color: var(--oro); border-bottom-color: rgba(216,180,106,.6); }
+.acciones { display: flex; gap: 2rem; justify-content: center; align-items: center; flex-wrap: wrap; }
+.acciones .principal { font-size: 1.2rem; letter-spacing: .2em; text-transform: uppercase; color: var(--oro); padding: .5rem 1.2rem; border-top: 1px solid rgba(216,180,106,.35); border-bottom: 1px solid rgba(216,180,106,.35); }
+.acciones .principal[disabled] { color: #5d5850; border-color: #2a2824; cursor: default; }
+.acciones .secundaria { color: var(--hueso-2); }
+#error { text-align: center; color: #e39a7a; font-size: 1rem; }
+
+/* celular */
+#tactil { position: fixed; inset: 0; z-index: 2; }
+#palanca { position: fixed; width: 96px; height: 96px; margin: -48px; border-radius: 50%; border: 1px solid rgba(221,213,196,.18); pointer-events: none; z-index: 3; }
+#palanca i { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px; border-radius: 50%; background: rgba(221,213,196,.16); }
+@media (max-width: 640px) {
+  .columnas { grid-template-columns: 1fr; }
+  #aviso { font-size: 1.05rem; }
+  #mensaje .texto { font-size: 1.45rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entrar, #fundido, #titulo-grande { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="portada">
+  <div class="portada-cuerpo">
+    <h1>Hoguera</h1>
+    <p class="bajada">Un santuario en ruinas. Otros pasaron antes que vos y dejaron mensajes en el piso. Leelos, descansá junto al fuego y dejá el tuyo para el que viene.</p>
+    <button class="entrar" id="entrar">Entrar</button>
+    <p class="nota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="7" rx="1.5"/><rect x="17" y="14" width="4" height="7" rx="1.5"/></svg>Con auriculares y el volumen alto: el sonido sale de donde está.</p>
+    <p class="teclas" id="teclas"><span><kbd>W A S D</kbd> caminar</span><span>mouse para mirar</span><span><kbd>E</kbd> descansar</span><span><kbd>M</kbd> escribir</span><span><kbd>Esc</kbd> pausa</span></p>
+  </div>
+  <p class="firma">Homenaje a Dark Souls, de Hidetaka Miyazaki. Hecho por <a href="https://diaczun.com">Esteban Diaczun</a>.</p>
+</div>
+
+<div id="pausa" class="oculto">
+  <div class="portada-cuerpo">
+    <p class="bajada">El fuego te espera.</p>
+    <button class="entrar" id="seguir">Seguir</button>
+  </div>
+</div>
+
+<div id="tactil" class="oculto"></div>
+<div id="palanca" class="oculto"><i></i></div>
+<div id="mira" class="oculto"></div>
+<button id="aviso" class="oculto"></button>
+<div id="mensaje" class="oculto" aria-live="polite">
+  <p class="texto"></p>
+  <p class="meta"><span class="votos"></span><button id="valorar"></button></p>
+</div>
+<button id="escribir-btn" class="oculto">Escribir un mensaje</button>
+<div id="fundido"></div>
+<div id="titulo-grande"><span></span><small></small></div>
+
+<div id="escribir" class="oculto" role="dialog" aria-modal="true" aria-labelledby="escribir-titulo">
+  <div class="escribir-cuerpo">
+    <h2 id="escribir-titulo">Dejar un mensaje en el piso</h2>
+    <p id="vista"></p>
+    <div class="columnas">
+      <div class="lista" id="plantillas"><h3>Frase</h3></div>
+      <div class="lista" id="palabras"><h3>Palabra</h3></div>
+    </div>
+    <p id="error" class="oculto"></p>
+    <div class="acciones">
+      <button class="principal" id="dejar" disabled>Dejarlo acá</button>
+      <button class="secundaria" id="cancelar">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
+<script type="module">
+import * as THREE from 'three';
+import { PLANTILLAS, PALABRAS, SEMILLAS } from './mensajes.js';
+
+// Vacío = sin servidor: los mensajes quedan solo en este navegador.
+const API = '';
+
+const tactil = matchMedia('(pointer: coarse)').matches;
+const $ = (id) => document.getElementById(id);
+const frase = (m) => { const s = PLANTILLAS[m.t].replace('___', PALABRAS[m.w]); return s.replace(/^(¿?)(\p{L})/u, (_, a, b) => a + b.toUpperCase()); };
+
+// ---------- escena ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+const dpr = Math.min(devicePixelRatio, tactil ? 1.5 : 2);
+renderer.setPixelRatio(dpr);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = !tactil;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const NOCHE = new THREE.Color('#0c0f15');
+scene.background = NOCHE;
+scene.fog = new THREE.FogExp2(NOCHE, 0.062);
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 120);
+const ALTURA = 1.65;
+
+scene.add(new THREE.HemisphereLight('#4a587a', '#14110d', 1.3));
+const luna = new THREE.DirectionalLight('#9fb2d6', 1.1);
+luna.position.set(-10, 20, -6);
+scene.add(luna);
+
+// textura de piedra hecha a mano en un canvas
+function piedra(tamano, baldosas, tono) {
+  const c = document.createElement('canvas');
+  c.width = c.height = tamano;
+  const g = c.getContext('2d');
+  g.fillStyle = tono;
+  g.fillRect(0, 0, tamano, tamano);
+  for (let i = 0; i < 2600; i++) {
+    const r = Math.random() * tamano * 0.04 + 1;
+    g.fillStyle = `rgba(${Math.random() < .5 ? '0,0,0' : '255,245,225'},${Math.random() * 0.06})`;
+    g.beginPath();
+    g.arc(Math.random() * tamano, Math.random() * tamano, r, 0, 7);
+    g.fill();
+  }
+  if (baldosas) {
+    const p = tamano / baldosas;
+    for (let y = 0; y < baldosas; y++) for (let x = 0; x < baldosas; x++) {
+      g.fillStyle = `rgba(0,0,0,${Math.random() * 0.18})`;
+      g.fillRect(x * p + 2, y * p + 2, p - 4, p - 4);
+    }
+    g.strokeStyle = 'rgba(0,0,0,.55)';
+    g.lineWidth = 3;
+    for (let i = 0; i <= baldosas; i++) {
+      g.beginPath(); g.moveTo(0, i * p); g.lineTo(tamano, i * p); g.stroke();
+      g.beginPath(); g.moveTo(i * p + (i % 2) * p * 0.5, 0); g.lineTo(i * p + (i % 2) * p * 0.5, tamano); g.stroke();
+    }
+    g.strokeStyle = 'rgba(0,0,0,.35)';
+    g.lineWidth = 1.5;
+    for (let i = 0; i < 14; i++) {
+      let x = Math.random() * tamano, y = Math.random() * tamano;
+      g.beginPath(); g.moveTo(x, y);
+      for (let k = 0; k < 6; k++) { x += (Math.random() - .5) * 40; y += (Math.random() - .5) * 40; g.lineTo(x, y); }
+      g.stroke();
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
+const texPiso = piedra(1024, 8, '#4a4740');
+texPiso.repeat.set(10, 10);
+const piso = new THREE.Mesh(
+  new THREE.PlaneGeometry(90, 90),
+  new THREE.MeshStandardMaterial({ map: texPiso, roughness: 0.96, color: '#9a9488' })
+);
+piso.rotation.x = -Math.PI / 2;
+piso.receiveShadow = true;
+scene.add(piso);
+
+const texCol = piedra(512, 0, '#6b665c');
+const matPiedra = new THREE.MeshStandardMaterial({ map: texCol, roughness: 0.92, color: '#a59f92' });
+
+// obstáculos para no atravesar nada: círculos en el plano
+const solidos = [];
+function solido(m) { m.castShadow = m.receiveShadow = true; scene.add(m); return m; }
+
+function columna(x, z, alto, quebrada) {
+  const g = new THREE.CylinderGeometry(0.42, 0.5, alto, 18, 6);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i);
+    const ang = Math.atan2(pos.getZ(i), pos.getX(i));
+    // estrías y desgaste
+    const k = 1 + Math.cos(ang * 18) * 0.025 + (Math.random() - .5) * 0.04;
+    pos.setX(i, pos.getX(i) * k);
+    pos.setZ(i, pos.getZ(i) * k);
+    if (quebrada && y > alto / 2 - 0.01) pos.setY(i, y - Math.random() * 0.6);
+  }
+  g.computeVertexNormals();
+  const c = solido(new THREE.Mesh(g, matPiedra));
+  c.position.set(x, alto / 2, z);
+  c.rotation.y = Math.random() * 6;
+  const base = solido(new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.35, 1.3), matPiedra));
+  base.position.set(x, 0.17, z);
+  base.rotation.y = c.rotation.y;
+  if (!quebrada) {
+    const capitel = solido(new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.4, 1.25), matPiedra));
+    capitel.position.set(x, alto + 0.2, z);
+    capitel.rotation.y = c.rotation.y;
+  }
+  solidos.push({ x, z, r: 0.8 });
+}
+
+function caida(x, z, largo, giro) {
+  const c = solido(new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, largo, 18), matPiedra));
+  c.rotation.z = Math.PI / 2;
+  c.rotation.y = giro;
+  c.position.set(x, 0.45, z);
+  const dx = Math.cos(giro), dz = -Math.sin(giro);
+  for (let s = -largo / 2; s <= largo / 2; s += 0.7) solidos.push({ x: x + dx * s, z: z + dz * s, r: 0.6 });
+}
+
+function muro(x, z, largo, alto, giro) {
+  const m = solido(new THREE.Mesh(new THREE.BoxGeometry(largo, alto, 0.7), matPiedra));
+  m.position.set(x, alto / 2, z);
+  m.rotation.y = giro;
+  const dx = Math.cos(giro), dz = -Math.sin(giro);
+  for (let s = -largo / 2; s <= largo / 2; s += 0.6) solidos.push({ x: x + dx * s, z: z + dz * s, r: 0.55 });
+}
+
+// anillo de columnas alrededor del fuego
+const ANILLO = 8.5;
+const alturas = [6.5, 3.1, 6.5, 6.5, 1.6, 6.5, 4.2, 6.5, 2.4, 6.5, 6.5];
+alturas.forEach((h, i) => {
+  if (i === 2) return; // hueco de entrada, mirando al que llega
+  const a = (i / alturas.length) * Math.PI * 2 + 0.3;
+  columna(Math.cos(a) * ANILLO, Math.sin(a) * ANILLO, h, h < 6);
+});
+caida(4.4, -11.5, 5.5, 0.4);
+caida(-12.5, 3.5, 4.5, 1.9);
+caida(10.5, 5.5, 3.8, -0.8);
+
+// muros rotos del recinto exterior
+for (let i = 0; i < 16; i++) {
+  if ([3, 4, 9, 13].includes(i)) continue;
+  const a = (i / 16) * Math.PI * 2;
+  const largo = 4.5 + Math.random() * 1.5;
+  muro(Math.cos(a) * 16, Math.sin(a) * 16, largo, 0.9 + Math.random() * 2.6, -a + Math.PI / 2);
+}
+// siluetas lejanas entre la niebla
+for (let i = 0; i < 9; i++) {
+  const a = (i / 9) * Math.PI * 2 + 0.5;
+  const r = 26 + Math.random() * 8;
+  const h = 8 + Math.random() * 10;
+  const t = new THREE.Mesh(new THREE.BoxGeometry(2 + Math.random() * 3, h, 2 + Math.random() * 3), matPiedra);
+  t.position.set(Math.cos(a) * r, h / 2, Math.sin(a) * r);
+  t.rotation.y = Math.random();
+  scene.add(t);
+}
+
+// estrado circular bajo el fuego
+const estrado = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.6, 0.12, 40), matPiedra);
+estrado.position.y = 0.06;
+estrado.receiveShadow = true;
+scene.add(estrado);
+
+// la hoguera: ceniza, piedras, huesos y la espada clavada
+const hoguera = new THREE.Group();
+scene.add(hoguera);
+const ceniza = new THREE.Mesh(new THREE.ConeGeometry(0.85, 0.35, 24), new THREE.MeshStandardMaterial({ color: '#2a2622', roughness: 1 }));
+ceniza.position.y = 0.17;
+hoguera.add(ceniza);
+for (let i = 0; i < 11; i++) {
+  const a = (i / 11) * Math.PI * 2;
+  const p = new THREE.Mesh(new THREE.DodecahedronGeometry(0.18 + Math.random() * 0.08), matPiedra);
+  p.position.set(Math.cos(a) * 0.95, 0.12, Math.sin(a) * 0.95);
+  p.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+  p.castShadow = true;
+  hoguera.add(p);
+}
+const matLena = new THREE.MeshStandardMaterial({ color: '#1c1511', roughness: 1 });
+for (let i = 0; i < 7; i++) {
+  const h = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.5, 3, 7), matLena);
+  const a = Math.random() * 6.28;
+  h.position.set(Math.cos(a) * 0.35, 0.3, Math.sin(a) * 0.35);
+  h.rotation.set(Math.PI / 2 - 0.5, a, 0);
+  hoguera.add(h);
+}
+const matHierro = new THREE.MeshStandardMaterial({ color: '#3b3632', roughness: 0.55, metalness: 0.85 });
+const espada = new THREE.Group();
+const hoja = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.25, 0.018), matHierro);
+hoja.position.y = 0.62;
+const guarda = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, 0.06), matHierro);
+guarda.position.y = 1.25;
+const empunadura = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.26, 8), matHierro);
+empunadura.position.y = 1.4;
+espada.add(hoja, guarda, empunadura);
+espada.position.y = 0.05;
+espada.rotation.set(0.12, 0.6, -0.08);
+espada.traverse((o) => { o.castShadow = true; });
+hoguera.add(espada);
+solidos.push({ x: 0, z: 0, r: 1.3 });
+
+const luzFuego = new THREE.PointLight('#ff8a3c', 4, 30, 1.6);
+luzFuego.position.set(0, 1.0, 0);
+luzFuego.castShadow = !tactil;
+luzFuego.shadow.mapSize.set(1024, 1024);
+luzFuego.shadow.bias = -0.002;
+luzFuego.shadow.radius = 4;
+scene.add(luzFuego);
+
+// llamas y brasas: partículas que suben y mueren
+function particulas(n, alto, tamano, dispersion) {
+  const g = new THREE.BufferGeometry();
+  const semillas = new Float32Array(n);
+  for (let i = 0; i < n; i++) semillas[i] = Math.random();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+  g.setAttribute('aSemilla', new THREE.BufferAttribute(semillas, 1));
+  const m = new THREE.ShaderMaterial({
+    uniforms: { uTiempo: { value: 0 }, uVivo: { value: 0 }, uTam: { value: tamano * dpr }, uAlto: { value: alto }, uDisp: { value: dispersion } },
+    vertexShader: `
+      uniform float uTiempo, uVivo, uTam, uAlto, uDisp;
+      attribute float aSemilla;
+      varying float vVida;
+      void main() {
+        float vel = 0.55 + fract(aSemilla * 13.7) * 0.6;
+        float vida = fract(uTiempo * vel + aSemilla);
+        vVida = vida;
+        float a = aSemilla * 43.98;
+        float r = (0.1 + 0.3 * fract(aSemilla * 91.3)) * (1.0 - vida * 0.7) * mix(0.55, 1.0, uVivo) * uDisp;
+        vec3 p = vec3(cos(a) * r + sin(uTiempo * 2.3 + aSemilla * 20.0) * 0.12 * vida * uDisp,
+                      0.25 + vida * uAlto * mix(0.35, 1.0, uVivo),
+                      sin(a) * r + cos(uTiempo * 1.9 + aSemilla * 17.0) * 0.12 * vida * uDisp);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_PointSize = uTam * (1.0 - vida * 0.75) * mix(0.45, 1.0, uVivo) * (0.6 + fract(aSemilla * 7.1) * 0.7) / -mv.z;
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      varying float vVida;
+      void main() {
+        float d = length(gl_PointCoord - 0.5);
+        float a = smoothstep(0.5, 0.0, d);
+        vec3 c = mix(vec3(1.0, 0.86, 0.55), vec3(1.0, 0.42, 0.08), smoothstep(0.0, 0.45, vVida));
+        c = mix(c, vec3(0.55, 0.1, 0.03), smoothstep(0.45, 1.0, vVida));
+        gl_FragColor = vec4(c, a * (1.0 - vVida) * 0.85);
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const p = new THREE.Points(g, m);
+  p.frustumCulled = false;
+  scene.add(p);
+  return m;
+}
+const llamas = particulas(220, 1.7, 260, 1);
+const brasas = particulas(60, 5.5, 34, 3.5);
+
+// ---------- mensajes en el piso ----------
+function runa(semilla) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d');
+  let s = semilla * 9301 + 49297;
+  const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  g.strokeStyle = '#ffb26b';
+  g.lineCap = 'round';
+  g.shadowColor = '#ff7a2a';
+  g.shadowBlur = 14;
+  for (let fila = 0; fila < 3; fila++) {
+    let x = 46 + rnd() * 20, y = 92 + fila * 40;
+    const fin = 210 - rnd() * 40 - (fila === 2 ? 50 : 0);
+    g.lineWidth = 3.2;
+    g.beginPath();
+    g.moveTo(x, y);
+    while (x < fin) {
+      const nx = x + 8 + rnd() * 14;
+      g.quadraticCurveTo((x + nx) / 2, y + (rnd() - .5) * 26, nx, y + (rnd() - .5) * 6);
+      x = nx;
+    }
+    g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const runas = [0, 1, 2, 3, 4].map(runa);
+const geoRuna = new THREE.PlaneGeometry(1.15, 1.15);
+
+const mensajes = [];
+function ponerMensaje(m) {
+  const mat = new THREE.MeshBasicMaterial({ map: runas[Math.abs(hash(m.id)) % runas.length], transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.8 });
+  const malla = new THREE.Mesh(geoRuna, mat);
+  malla.rotation.x = -Math.PI / 2;
+  malla.rotation.z = (hash(m.id) % 628) / 100;
+  malla.position.set(m.x, Math.hypot(m.x, m.z) < 3.5 ? 0.135 : 0.015, m.z);
+  scene.add(malla);
+  mensajes.push({ ...m, malla, fase: Math.random() * 6 });
+}
+function hash(s) { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) | 0; return Math.abs(h); }
+
+const LOCAL = 'hoguera:propios';
+const VOTADOS = 'hoguera:votados';
+const leer = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const guardar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+
+async function cargarMensajes() {
+  let lista = null;
+  if (API) {
+    try {
+      const r = await fetch(API + '/mensajes');
+      if (r.ok) lista = await r.json();
+    } catch {}
+  }
+  if (!lista) lista = [...SEMILLAS, ...leer(LOCAL, [])];
+  lista.forEach(ponerMensaje);
+}
+cargarMensajes();
+
+// ---------- sonido ----------
+let audio = null;
+function iniciarAudio() {
+  if (audio) { audio.ctx.resume(); return; }
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const maestro = ctx.createGain();
+  maestro.gain.value = 0.9;
+  maestro.connect(ctx.destination);
+
+  const ruido = ctx.createBuffer(1, ctx.sampleRate * 3, ctx.sampleRate);
+  const d = ruido.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  const fuente = () => { const s = ctx.createBufferSource(); s.buffer = ruido; s.loop = true; s.start(0, Math.random() * 3); return s; };
+
+  const panner = new PannerNode(ctx, { panningModel: 'HRTF', distanceModel: 'inverse', refDistance: 1.6, rolloffFactor: 1.4, positionX: 0, positionY: 0.8, positionZ: 0 });
+  panner.connect(maestro);
+  const fuego = ctx.createGain();
+  fuego.gain.value = 0.18;
+  fuego.connect(panner);
+
+  // rugido grave del fuego
+  const rugido = fuente();
+  const pb = ctx.createBiquadFilter(); pb.type = 'lowpass'; pb.frequency.value = 420;
+  const rg = ctx.createGain(); rg.gain.value = 0.5;
+  rugido.connect(pb).connect(rg).connect(fuego);
+
+  // chasquidos
+  function chasquido() {
+    const s = ctx.createBufferSource(); s.buffer = ruido;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1500 + Math.random() * 3500; f.Q.value = 1.2;
+    const g = ctx.createGain();
+    const t = ctx.currentTime;
+    const fuerza = (0.4 + Math.random()) * (0.3 + estado.vivo * 0.9);
+    g.gain.setValueAtTime(fuerza, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.02 + Math.random() * 0.05);
+    s.connect(f).connect(g).connect(fuego);
+    s.start(t, Math.random() * 2, 0.1);
+    setTimeout(chasquido, 30 + Math.random() * (estado.vivo > 0.5 ? 220 : 700));
+  }
+  chasquido();
+
+  // viento entre las columnas
+  for (const [frec, lfo, vol] of [[380, 0.06, 0.09], [900, 0.11, 0.035]]) {
+    const v = fuente();
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = frec; f.Q.value = 0.9;
+    const o = ctx.createOscillator(); o.frequency.value = lfo;
+    const og = ctx.createGain(); og.gain.value = frec * 0.6;
+    o.connect(og).connect(f.frequency); o.start();
+    const o2 = ctx.createOscillator(); o2.frequency.value = lfo * 0.7;
+    const g = ctx.createGain(); g.gain.value = vol;
+    const o2g = ctx.createGain(); o2g.gain.value = vol * 0.8;
+    o2.connect(o2g).connect(g.gain); o2.start();
+    v.connect(f).connect(g).connect(maestro);
+  }
+
+  function paso() {
+    const s = ctx.createBufferSource(); s.buffer = ruido;
+    const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260 + Math.random() * 260;
+    const f2 = ctx.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = 60;
+    const g = ctx.createGain();
+    const t = ctx.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.55, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    s.connect(f).connect(f2).connect(g).connect(maestro);
+    s.start(t, Math.random() * 2, 0.2);
+  }
+
+  function encender() {
+    const t = ctx.currentTime;
+    const s = ctx.createBufferSource(); s.buffer = ruido;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.7;
+    f.frequency.setValueAtTime(200, t); f.frequency.exponentialRampToValueAtTime(2400, t + 0.9);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.6, t + 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+    s.connect(f).connect(g).connect(panner);
+    s.start(t, 0, 2.5);
+    for (const [hz, v] of [[55, 0.28], [82.4, 0.16], [110, 0.1]]) {
+      const o = ctx.createOscillator(); o.frequency.value = hz;
+      const og = ctx.createGain();
+      og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(v, t + 0.6); og.gain.exponentialRampToValueAtTime(0.0001, t + 4.5);
+      o.connect(og).connect(maestro); o.start(t); o.stop(t + 4.6);
+    }
+  }
+
+  audio = { ctx, fuego, paso, encender };
+}
+
+function oyente() {
+  if (!audio) return;
+  const l = audio.ctx.listener;
+  const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+  const p = camera.position;
+  if (l.positionX) {
+    l.positionX.value = p.x; l.positionY.value = p.y; l.positionZ.value = p.z;
+    l.forwardX.value = fwd.x; l.forwardY.value = fwd.y; l.forwardZ.value = fwd.z;
+    l.upX.value = 0; l.upY.value = 1; l.upZ.value = 0;
+  } else {
+    l.setPosition(p.x, p.y, p.z);
+    l.setOrientation(fwd.x, fwd.y, fwd.z, 0, 1, 0);
+  }
+  audio.fuego.gain.value = 0.12 + estado.vivo * 0.5;
+}
+
+// ---------- jugador ----------
+const estado = { jugando: false, pausa: false, escribiendo: false, descansando: false, encendida: false, vivo: 0, cerca: null, enHoguera: false };
+const prueba = new URLSearchParams(location.search).get('en')?.split(',').map(Number); // ?en=x,z para pruebas
+const jugador = { x: prueba?.[0] ?? 0, z: prueba?.[1] ?? 17.5, yaw: 0, pitch: -0.04, vx: 0, vz: 0, paso: 0, bob: 0 };
+const teclas = new Set();
+const tactilMov = { x: 0, y: 0 };
+
+addEventListener('keydown', (e) => {
+  if (estado.escribiendo) { if (e.key === 'Escape') cerrarEscribir(); return; }
+  if (!estado.jugando || estado.pausa) return;
+  teclas.add(e.code);
+  if (e.code === 'KeyE' && estado.enHoguera) descansar();
+  if (e.code === 'KeyR' && estado.cerca) valorar();
+  if (e.code === 'KeyM') abrirEscribir();
+});
+addEventListener('keyup', (e) => teclas.delete(e.code));
+addEventListener('blur', () => teclas.clear());
+
+document.addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== renderer.domElement || estado.descansando) return;
+  mirar(e.movementX, e.movementY, 0.0022);
+});
+function mirar(dx, dy, k) {
+  jugador.yaw -= dx * k;
+  jugador.pitch = Math.max(-1.3, Math.min(1.3, jugador.pitch - dy * k));
+}
+
+function bloquear() { if (!tactil) renderer.domElement.requestPointerLock?.(); }
+document.addEventListener('pointerlockchange', () => {
+  if (!tactil && !document.pointerLockElement && estado.jugando && !estado.escribiendo) pausar(true);
+});
+renderer.domElement.addEventListener('click', () => { if (estado.jugando && !estado.pausa) bloquear(); });
+
+function pausar(si) {
+  estado.pausa = si;
+  $('pausa').classList.toggle('oculto', !si);
+  teclas.clear();
+  if (si) audio?.ctx.suspend(); else { audio?.ctx.resume(); bloquear(); }
+}
+$('seguir').addEventListener('click', () => pausar(false));
+
+$('entrar').addEventListener('click', () => {
+  iniciarAudio();
+  $('portada').classList.add('oculto');
+  estado.jugando = true;
+  $('escribir-btn').classList.remove('oculto');
+  $('mira').classList.toggle('oculto', tactil);
+  if (tactil) { $('tactil').classList.remove('oculto'); $('escribir-btn').textContent = 'Escribir'; }
+  bloquear();
+});
+if (tactil) $('teclas').innerHTML = '<span>pulgar izquierdo para caminar</span><span>derecho para mirar</span>';
+
+// táctil: izquierda camina, derecha mira
+const toques = new Map();
+$('tactil').addEventListener('pointerdown', (e) => {
+  const lado = e.clientX < innerWidth / 2 ? 'mover' : 'mirar';
+  toques.set(e.pointerId, { lado, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY });
+  if (lado === 'mover') { const p = $('palanca'); p.style.left = e.clientX + 'px'; p.style.top = e.clientY + 'px'; p.classList.remove('oculto'); }
+});
+$('tactil').addEventListener('pointermove', (e) => {
+  const t = toques.get(e.pointerId);
+  if (!t) return;
+  if (t.lado === 'mirar') { if (!estado.descansando) mirar(e.clientX - t.x, e.clientY - t.y, 0.006); }
+  else {
+    let dx = e.clientX - t.x0, dy = e.clientY - t.y0;
+    const l = Math.hypot(dx, dy), max = 48;
+    if (l > max) { dx *= max / l; dy *= max / l; }
+    tactilMov.x = dx / max; tactilMov.y = dy / max;
+    $('palanca').querySelector('i').style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+  t.x = e.clientX; t.y = e.clientY;
+});
+const soltar = (e) => {
+  const t = toques.get(e.pointerId);
+  if (t?.lado === 'mover') { tactilMov.x = tactilMov.y = 0; $('palanca').classList.add('oculto'); $('palanca').querySelector('i').style.transform = ''; }
+  toques.delete(e.pointerId);
+};
+$('tactil').addEventListener('pointerup', soltar);
+$('tactil').addEventListener('pointercancel', soltar);
+
+$('aviso').addEventListener('click', () => { if (estado.enHoguera) descansar(); });
+
+function mover(dt) {
+  let f = 0, s = 0;
+  if (teclas.has('KeyW') || teclas.has('ArrowUp')) f += 1;
+  if (teclas.has('KeyS') || teclas.has('ArrowDown')) f -= 1;
+  if (teclas.has('KeyD') || teclas.has('ArrowRight')) s += 1;
+  if (teclas.has('KeyA') || teclas.has('ArrowLeft')) s -= 1;
+  f -= tactilMov.y; s += tactilMov.x;
+  const l = Math.hypot(f, s);
+  if (l > 1) { f /= l; s /= l; }
+  if (estado.descansando || estado.pausa || estado.escribiendo) f = s = 0;
+  const vel = teclas.has('ShiftLeft') ? 5 : 2.9;
+  const sy = Math.sin(jugador.yaw), cy = Math.cos(jugador.yaw);
+  const tx = (-sy * f + cy * s) * vel, tz = (-cy * f - sy * s) * vel;
+  const k = 1 - Math.exp(-dt * 9);
+  jugador.vx += (tx - jugador.vx) * k;
+  jugador.vz += (tz - jugador.vz) * k;
+  let nx = jugador.x + jugador.vx * dt, nz = jugador.z + jugador.vz * dt;
+  for (const o of solidos) {
+    const dx = nx - o.x, dz = nz - o.z, d = Math.hypot(dx, dz), min = o.r + 0.3;
+    if (d < min && d > 0) { nx = o.x + dx / d * min; nz = o.z + dz / d * min; }
+  }
+  const r = Math.hypot(nx, nz);
+  if (r > 19) { nx *= 19 / r; nz *= 19 / r; }
+  const rapidez = Math.hypot(nx - jugador.x, nz - jugador.z) / Math.max(dt, 1e-4);
+  jugador.x = nx; jugador.z = nz;
+  jugador.paso += rapidez * dt;
+  if (jugador.paso > 1.35) { jugador.paso = 0; audio?.paso(); }
+  jugador.bob += rapidez * dt * 4.6;
+  const sobreEstrado = Math.hypot(jugador.x, jugador.z) < 3.5 ? 0.12 : 0;
+  camera.position.set(jugador.x, ALTURA + sobreEstrado + Math.sin(jugador.bob) * 0.025 * Math.min(rapidez / 3, 1), jugador.z);
+  camera.rotation.set(jugador.pitch, jugador.yaw, 0, 'YXZ');
+}
+
+// ---------- descansar ----------
+let tituloTimer;
+function titulo(grande, chico, ms) {
+  const t = $('titulo-grande');
+  t.querySelector('span').textContent = grande;
+  t.querySelector('small').textContent = chico;
+  t.style.opacity = 1;
+  clearTimeout(tituloTimer);
+  tituloTimer = setTimeout(() => (t.style.opacity = 0), ms);
+}
+function descansar() {
+  if (estado.descansando) return;
+  estado.descansando = true;
+  $('aviso').classList.add('oculto');
+  const primera = !estado.encendida;
+  if (primera) {
+    estado.encendida = true;
+    audio?.encender();
+    titulo('Hoguera encendida', 'El fuego te recuerda. Dejá algo para el que viene.', 3600);
+  } else {
+    $('fundido').style.opacity = 0.7;
+    titulo('Descansás', 'Las brasas crepitan. Afuera, el viento.', 2600);
+  }
+  setTimeout(() => {
+    $('fundido').style.opacity = 0;
+    estado.descansando = false;
+    if (primera) abrirEscribir();
+  }, primera ? 4200 : 3000);
+}
+
+// ---------- leer y valorar ----------
+let votando = false;
+async function valorar() {
+  const m = estado.cerca;
+  const votados = leer(VOTADOS, []);
+  if (!m || votados.includes(m.id) || votando) return;
+  votando = true;
+  m.v = (m.v || 0) + 1;
+  guardar(VOTADOS, [...votados, m.id]);
+  mostrarMensaje(m, true);
+  if (API && !String(m.id).startsWith('s')) {
+    try { await fetch(`${API}/mensajes/${m.id}/valorar`, { method: 'POST' }); } catch {}
+  }
+  votando = false;
+}
+$('valorar').addEventListener('click', valorar);
+
+let mostrado = null;
+function mostrarMensaje(m, forzar) {
+  const caja = $('mensaje');
+  if (!m) { caja.classList.add('oculto'); mostrado = null; return; }
+  if (mostrado === m && !forzar) return;
+  mostrado = m;
+  caja.querySelector('.texto').textContent = frase(m);
+  const v = m.v || 0;
+  caja.querySelector('.votos').textContent = v ? `Valorado ${v} ${v === 1 ? 'vez' : 'veces'}` : 'Nadie lo valoró todavía';
+  const ya = leer(VOTADOS, []).includes(m.id);
+  const b = $('valorar');
+  b.disabled = ya;
+  b.innerHTML = ya ? 'Ya lo valoraste' : (tactil ? 'Buen mensaje' : '<kbd>R</kbd> Buen mensaje');
+  caja.classList.remove('oculto');
+}
+
+// ---------- escribir ----------
+const elegido = { t: null, w: null };
+function armarListas() {
+  PLANTILLAS.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.textContent = p; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => { elegido.t = i; refrescarVista(); });
+    $('plantillas').append(b);
+  });
+  PALABRAS.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.textContent = p; b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => { elegido.w = i; refrescarVista(); });
+    $('palabras').append(b);
+  });
+}
+armarListas();
+function refrescarVista() {
+  [...$('plantillas').querySelectorAll('button')].forEach((b, i) => b.setAttribute('aria-pressed', String(i === elegido.t)));
+  [...$('palabras').querySelectorAll('button')].forEach((b, i) => b.setAttribute('aria-pressed', String(i === elegido.w)));
+  const p = elegido.t === null ? '___' : PLANTILLAS[elegido.t];
+  const w = elegido.w === null ? '<span class="hueco">___</span>' : PALABRAS[elegido.w];
+  $('vista').innerHTML = elegido.t === null && elegido.w === null
+    ? '<span class="hueco">Elegí una frase y una palabra</span>'
+    : p.replace('___', w).replace(/^___/, '<span class="hueco">___</span>');
+  $('dejar').disabled = elegido.t === null || elegido.w === null;
+}
+function abrirEscribir() {
+  if (estado.escribiendo || !estado.jugando) return;
+  estado.escribiendo = true;
+  teclas.clear();
+  document.exitPointerLock?.();
+  elegido.t = elegido.w = null;
+  refrescarVista();
+  $('error').classList.add('oculto');
+  $('escribir').classList.remove('oculto');
+  $('escribir-btn').classList.add('oculto');
+  $('plantillas').querySelector('button').focus();
+}
+function cerrarEscribir() {
+  estado.escribiendo = false;
+  $('escribir').classList.add('oculto');
+  $('escribir-btn').classList.remove('oculto');
+  bloquear();
+}
+$('cancelar').addEventListener('click', cerrarEscribir);
+$('escribir-btn').addEventListener('click', abrirEscribir);
+$('dejar').addEventListener('click', async () => {
+  // un paso adelante de los pies, para que se vea al darse vuelta
+  const x = +(jugador.x - Math.sin(jugador.yaw) * 1.1).toFixed(2);
+  const z = +(jugador.z - Math.cos(jugador.yaw) * 1.1).toFixed(2);
+  let m = { id: 'l' + Date.now(), t: elegido.t, w: elegido.w, x, z, v: 0 };
+  if (API) {
+    $('dejar').disabled = true;
+    try {
+      const r = await fetch(API + '/mensajes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: m.t, w: m.w, x, z }) });
+      if (r.status === 429) throw new Error('Dejaste uno hace muy poco. Esperá un minuto y probá de nuevo.');
+      if (!r.ok) throw new Error('No se pudo guardar el mensaje. Probá de nuevo en un rato.');
+      m = await r.json();
+    } catch (err) {
+      $('error').textContent = err.message.startsWith('Dejaste') || err.message.startsWith('No se') ? err.message : 'No hay conexión. Probá de nuevo en un rato.';
+      $('error').classList.remove('oculto');
+      $('dejar').disabled = false;
+      return;
+    }
+  } else {
+    guardar(LOCAL, [...leer(LOCAL, []), m]);
+  }
+  ponerMensaje(m);
+  cerrarEscribir();
+  titulo('Mensaje escrito', 'Va a quedar acá para el que venga.', 2400);
+});
+
+// ---------- bucle ----------
+const reloj = new THREE.Clock();
+const dirMira = new THREE.Vector3();
+function cuadro() {
+  const dt = Math.min(reloj.getDelta(), 0.05);
+  const t = reloj.elapsedTime;
+  if (estado.jugando) mover(dt);
+  else {
+    // portada: la cámara gira despacio mirando el fuego
+    const a = t * 0.04 + 1.4;
+    camera.position.set(Math.cos(a) * 12, 2.4, Math.sin(a) * 12);
+    camera.lookAt(0, 1.2, 0);
+  }
+
+  estado.vivo += ((estado.encendida ? 1 : 0) - estado.vivo) * (1 - Math.exp(-dt * 0.9));
+  const titileo = 0.82 + Math.sin(t * 13) * 0.05 + Math.sin(t * 7.3 + 1) * 0.07 + Math.random() * 0.06;
+  luzFuego.intensity = (3 + estado.vivo * 34) * titileo;
+  luzFuego.position.x = Math.sin(t * 5) * 0.05;
+  luzFuego.position.z = Math.cos(t * 4) * 0.05;
+  for (const m of [llamas, brasas]) { m.uniforms.uTiempo.value = t; m.uniforms.uVivo.value = estado.vivo; }
+
+  // mensaje más cercano
+  let cerca = null, dmin = 1.5;
+  for (const m of mensajes) {
+    m.malla.material.opacity = 0.55 + Math.sin(t * 1.6 + m.fase) * 0.25;
+    const d = Math.hypot(m.x - jugador.x, m.z - jugador.z);
+    if (estado.jugando && d < dmin) { dmin = d; cerca = m; }
+  }
+  estado.cerca = cerca;
+  estado.enHoguera = estado.jugando && Math.hypot(jugador.x, jugador.z) < 3.6;
+
+  if (estado.jugando && !estado.descansando && !estado.escribiendo) {
+    const aviso = $('aviso');
+    if (estado.enHoguera && !cerca) {
+      aviso.innerHTML = tactil ? 'Tocá acá para descansar' : '<kbd>E</kbd> Descansar en la hoguera';
+      aviso.classList.remove('oculto');
+    } else aviso.classList.add('oculto');
+    mostrarMensaje(cerca);
+  } else mostrarMensaje(null);
+
+  oyente();
+  camera.getWorldDirection(dirMira);
+  renderer.render(scene, camera);
+  requestAnimationFrame(cuadro);
+}
+cuadro();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
