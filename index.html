@@ -83,7 +83,6 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 #error { text-align: center; color: #e39a7a; font-size: 1rem; }
 
 #vineta { position: fixed; inset: 0; pointer-events: none; z-index: 1; background: radial-gradient(ellipse at 50% 55%, transparent 45%, rgba(0,0,0,.55) 100%); }
-#vineta::after { content: ""; position: absolute; inset: 0; opacity: .07; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
 /* celular */
 #tactil { position: fixed; inset: 0; z-index: 2; }
 #palanca { position: fixed; width: 96px; height: 96px; margin: -48px; border-radius: 50%; border: 1px solid rgba(221,213,196,.18); pointer-events: none; z-index: 3; }
@@ -121,7 +120,7 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 <div id="tactil" class="oculto"></div>
 <div id="palanca" class="oculto"><i></i></div>
 <div id="mira" class="oculto"></div>
-<button id="aviso" class="oculto"></button>
+<button id="aviso" class="oculto"><kbd>E</kbd> Descansar en la hoguera</button>
 <div id="mensaje" class="oculto" aria-live="polite">
   <p class="texto"></p>
   <p class="meta"><span class="votos"></span><button class="voto" id="bueno"></button><button class="voto malo" id="malo"></button></p>
@@ -159,28 +158,26 @@ const tactil = matchMedia('(pointer: coarse)').matches;
 const $ = (id) => document.getElementById(id);
 
 // ---------- escena ----------
-const dpr = Math.min(devicePixelRatio, tactil ? 1.25 : 1.5);
-const renderer = new THREE.WebGLRenderer({ antialias: dpr < 1.5, powerPreference: 'high-performance' });
+// resolución dinámica: arranca en 1 y se ajusta sola según cuánto tarda cada cuadro
+const dprMax = Math.min(devicePixelRatio, 1.5);
+let dpr = Math.min(1, dprMax);
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
 renderer.setPixelRatio(dpr);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.1;
-// sombras del fuego: se calculan una sola vez, la escena no se mueve
-renderer.shadowMap.enabled = !tactil;
-renderer.shadowMap.autoUpdate = false;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.prepend(renderer.domElement);
 
 const scene = new THREE.Scene();
 const NOCHE = new THREE.Color('#0d1119');
 scene.fog = new THREE.FogExp2(NOCHE, 0.05);
 
-const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.05, 160);
+const camera = new THREE.PerspectiveCamera(68, innerWidth / innerHeight, 0.05, 95);
 const ALTURA = 1.65;
 
 // cielo: degradé con luna y estrellas, sin texturas
 const cielo = new THREE.Mesh(
-  new THREE.SphereGeometry(120, 32, 16),
+  new THREE.SphereGeometry(85, 24, 12),
   new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { uLuna: { value: new THREE.Vector3(-0.45, 0.42, -0.78).normalize() } },
@@ -394,12 +391,12 @@ const listo = Promise.all(['stone_fire_pit', 'antique_estoc', 'gothic_statue', '
     solidos.push({ x: 0, z: -12.6, r: 1.5 });
 
     ajustar(arbol, 6.5);
-    [[-9.5, 12.5, 0.4, 1], [12.8, -9, 2.2, 0.8], [-17.5, -7, 4, 1.15], [18.5, 9, 1.2, 0.9]].forEach(([x, z, g, s]) => {
+    [[-9.5, 12.5, 0.4, 1], [12.8, -9, 2.2, 0.8], [-17.5, -7, 4, 1.15]].forEach(([x, z, g, s]) => {
       const a = arbol.clone(); a.scale.multiplyScalar(s);
       poner(a, x, z, g); solidos.push({ x, z, r: 0.6 });
     });
     ajustar(roca, 1.2);
-    [[6.5, 12, 0.5, 1], [-14, -1, 2, 1.6], [3, -15, 1, 0.8], [-6, -13.5, 3, 1.3], [14.5, 2.5, 4.4, 1.1], [-3, 13, 2.5, 0.6]].forEach(([x, z, g, s]) => {
+    [[6.5, 12, 0.5, 1], [-14, -1, 2, 1.6], [-6, -13.5, 3, 1.3], [14.5, 2.5, 4.4, 1.1]].forEach(([x, z, g, s]) => {
       const r = roca.clone(); r.scale.multiplyScalar(s);
       poner(r, x, z, g, 0.1 * s); solidos.push({ x, z, r: 0.8 * s });
     });
@@ -407,18 +404,12 @@ const listo = Promise.all(['stone_fire_pit', 'antique_estoc', 'gothic_statue', '
     const b = poner(busto, -5.2, -7.6, 2.1);
     b.rotation.z = 1.35; b.position.y = 0.32;
     solidos.push({ x: -5.2, z: -7.6, r: 0.5 });
-    renderer.shadowMap.needsUpdate = true;
   });
 
 const luzFuego = new THREE.PointLight('#ff8a3c', 4, 34, 1.6);
 luzFuego.position.set(0, 1.1, 0);
-luzFuego.castShadow = !tactil;
-luzFuego.shadow.mapSize.set(1024, 1024);
-luzFuego.shadow.bias = -0.003;
-luzFuego.shadow.radius = 5;
-luzFuego.shadow.camera.near = 0.3;
 scene.add(luzFuego);
-// la luz que titila no mueve sombras: una segunda luz sin sombra da el parpadeo
+// segunda luz para el parpadeo
 const luzTitileo = new THREE.PointLight('#ff6a24', 0, 18, 2);
 luzTitileo.position.set(0, 0.8, 0);
 scene.add(luzTitileo);
@@ -459,7 +450,7 @@ function particulas(n, alto, tamano, dispersion) {
                       0.25 + vida * uAlto * mix(0.35, 1.0, uVivo),
                       sin(a) * r + cos(uTiempo * 1.9 + aSemilla * 17.0) * 0.12 * vida * uDisp);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        gl_PointSize = uTam * (1.0 - vida * 0.75) * mix(0.45, 1.0, uVivo) * (0.6 + fract(aSemilla * 7.1) * 0.7) / -mv.z;
+        gl_PointSize = min(uTam * (1.0 - vida * 0.75) * mix(0.45, 1.0, uVivo) * (0.6 + fract(aSemilla * 7.1) * 0.7) / -mv.z, 90.0);
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: `
@@ -473,12 +464,13 @@ function particulas(n, alto, tamano, dispersion) {
       }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   });
+  m.userData.base = tamano;
   const p = new THREE.Points(g, m);
   p.frustumCulled = false;
   scene.add(p);
   return m;
 }
-const llamas = particulas(220, 1.7, 260, 1);
+const llamas = particulas(140, 1.7, 300, 1);
 const brasas = particulas(60, 5.5, 34, 3.5);
 
 // ---------- mensajes en el piso ----------
@@ -703,6 +695,7 @@ $('entrar').addEventListener('click', () => {
   else $('escribir-btn').innerHTML = '<kbd>M</kbd> Escribir un mensaje';
   bloquear();
 });
+if (tactil) $('aviso').textContent = 'Tocá acá para descansar';
 if (tactil) $('teclas').innerHTML = '<span>pulgar izquierdo para caminar</span><span>derecho para mirar</span>';
 
 // táctil: izquierda camina, derecha mira
@@ -905,10 +898,23 @@ $('dejar').addEventListener('click', async () => {
 });
 
 // ---------- bucle ----------
+let promedio = 1 / 60, desdeAjuste = 0;
+function ajustarResolucion(seg) {
+  promedio += (seg - promedio) * 0.05;
+  desdeAjuste += seg;
+  if (desdeAjuste < 1.2) return;
+  let nuevo = dpr;
+  if (promedio > 1 / 40) nuevo = Math.max(0.5, dpr * 0.8);
+  else if (promedio < 1 / 58) nuevo = Math.min(dprMax, dpr * 1.1);
+  if (Math.abs(nuevo - dpr) > 0.02) { dpr = nuevo; renderer.setPixelRatio(dpr); desdeAjuste = 0; for (const m of [llamas, brasas]) m.uniforms.uTam.value = m.userData.base * dpr; }
+}
+
 const reloj = new THREE.Clock();
 const dirMira = new THREE.Vector3();
 function cuadro() {
-  const dt = Math.min(reloj.getDelta(), 0.05);
+  const crudo = reloj.getDelta();
+  const dt = Math.min(crudo, 0.05);
+  ajustarResolucion(crudo);
   const t = reloj.elapsedTime;
   if (estado.jugando) mover(dt);
   else {
@@ -937,11 +943,7 @@ function cuadro() {
   estado.enHoguera = estado.jugando && Math.hypot(jugador.x, jugador.z) < 3.6;
 
   if (estado.jugando && !estado.descansando && !estado.escribiendo) {
-    const aviso = $('aviso');
-    if (estado.enHoguera && !cerca) {
-      aviso.innerHTML = tactil ? 'Tocá acá para descansar' : '<kbd>E</kbd> Descansar en la hoguera';
-      aviso.classList.remove('oculto');
-    } else aviso.classList.add('oculto');
+    $('aviso').classList.toggle('oculto', !(estado.enHoguera && !cerca));
     mostrarMensaje(cerca);
   } else mostrarMensaje(null);
 
