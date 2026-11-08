@@ -53,8 +53,6 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 #mensaje { position: fixed; left: 50%; bottom: max(18vh, 110px); transform: translateX(-50%); width: min(36rem, calc(100% - 32px)); text-align: center; padding: 1.1rem 2rem 1rem; background: linear-gradient(90deg, transparent, rgba(5,6,8,.86) 14%, rgba(5,6,8,.86) 86%, transparent); z-index: 4; display: grid; gap: .45rem; }
 #mensaje .texto { font-style: italic; font-size: 1.75rem; line-height: 1.2; color: #f3ead8; text-wrap: balance; }
 #mensaje .meta { font-size: .98rem; color: var(--hueso-2); display: flex; gap: 1.2rem; justify-content: center; align-items: center; flex-wrap: wrap; }
-#valorar { color: var(--oro); }
-#valorar[disabled] { color: #6f6a60; cursor: default; }
 #escribir-btn { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); font-size: 1rem; color: var(--hueso-2); padding: .5rem .2rem; z-index: 4; }
 #escribir-btn:hover { color: var(--oro); }
 #mira { position: fixed; left: 50%; top: 50%; width: 3px; height: 3px; margin: -1.5px; border-radius: 50%; background: rgba(221,213,196,.35); z-index: 3; pointer-events: none; }
@@ -68,14 +66,15 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 #escribir { position: fixed; inset: 0; z-index: 8; background: rgba(4,5,7,.9); display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; touch-action: pan-y; }
 .escribir-cuerpo { width: min(44rem, 100%); display: grid; gap: 1.6rem; }
 .escribir-cuerpo h2 { font-weight: 500; font-size: 1.05rem; letter-spacing: .25em; text-transform: uppercase; color: var(--hueso-2); text-align: center; }
-#vista { font-style: italic; font-size: clamp(1.6rem, 5vw, 2.3rem); text-align: center; color: #f3ead8; min-height: 2.6em; display: grid; place-items: center; text-wrap: balance; line-height: 1.2; }
-#vista .hueco { color: #8a8478; }
-.columnas { display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.6rem; }
-.lista { display: flex; flex-wrap: wrap; gap: .1rem .9rem; align-content: start; }
-.lista h3 { width: 100%; font-weight: 500; font-size: .9rem; letter-spacing: .2em; text-transform: uppercase; color: #8c8572; margin-bottom: .3rem; }
-.lista button { font-size: 1.12rem; padding: .25rem 0; color: var(--hueso-2); border-bottom: 1px solid transparent; transition: color .2s; }
-.lista button:hover { color: var(--hueso); }
-.lista button[aria-pressed="true"] { color: var(--oro); border-bottom-color: rgba(216,180,106,.6); }
+.campo { display: grid; gap: .6rem; }
+.ayuda { text-align: center; color: var(--hueso-2); font-size: 1.05rem; }
+#texto { font: italic 500 clamp(1.6rem, 5vw, 2.2rem)/1.25 var(--serif); color: #f3ead8; background: transparent; border: 0; border-bottom: 1px solid rgba(216,180,106,.35); text-align: center; resize: none; padding: .4rem 0; caret-color: var(--brasa); user-select: text; -webkit-user-select: text; }
+#texto::placeholder { color: #6b665c; }
+#texto:focus { outline: none; border-bottom-color: rgba(216,180,106,.8); }
+.cuenta { text-align: right; font-size: .9rem; color: var(--hueso-2); font-variant-numeric: tabular-nums; }
+.voto { color: var(--oro); }
+.voto.malo { color: var(--hueso-2); }
+.voto[disabled] { color: #6f6a60; cursor: default; }
 .acciones { display: flex; gap: 2rem; justify-content: center; align-items: center; flex-wrap: wrap; }
 .acciones .principal { font-size: 1.2rem; letter-spacing: .2em; text-transform: uppercase; color: var(--oro); padding: .5rem 1.2rem; border-top: 1px solid rgba(216,180,106,.35); border-bottom: 1px solid rgba(216,180,106,.35); }
 .acciones .principal[disabled] { color: #5d5850; border-color: #2a2824; cursor: default; }
@@ -87,7 +86,6 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 #palanca { position: fixed; width: 96px; height: 96px; margin: -48px; border-radius: 50%; border: 1px solid rgba(221,213,196,.18); pointer-events: none; z-index: 3; }
 #palanca i { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px; border-radius: 50%; background: rgba(221,213,196,.16); }
 @media (max-width: 640px) {
-  .columnas { grid-template-columns: 1fr; }
   #aviso { font-size: 1.05rem; }
   #mensaje .texto { font-size: 1.45rem; }
 }
@@ -122,7 +120,7 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 <button id="aviso" class="oculto"></button>
 <div id="mensaje" class="oculto" aria-live="polite">
   <p class="texto"></p>
-  <p class="meta"><span class="votos"></span><button id="valorar"></button></p>
+  <p class="meta"><span class="votos"></span><button class="voto" id="bueno"></button><button class="voto malo" id="malo"></button></p>
 </div>
 <button id="escribir-btn" class="oculto">Escribir un mensaje</button>
 <div id="fundido"></div>
@@ -131,11 +129,11 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 <div id="escribir" class="oculto" role="dialog" aria-modal="true" aria-labelledby="escribir-titulo">
   <div class="escribir-cuerpo">
     <h2 id="escribir-titulo">Dejar un mensaje en el piso</h2>
-    <p id="vista"></p>
-    <div class="columnas">
-      <div class="lista" id="plantillas"><h3>Frase</h3></div>
-      <div class="lista" id="palabras"><h3>Palabra</h3></div>
-    </div>
+    <label class="campo">
+      <span class="ayuda">Lo va a leer un desconocido. Algo que te hubiera servido a vos.</span>
+      <textarea id="texto" rows="2" maxlength="100" placeholder="Probá saltar" spellcheck="true" enterkeyhint="done"></textarea>
+      <span class="cuenta" id="cuenta">0 / 100</span>
+    </label>
     <p id="error" class="oculto"></p>
     <div class="acciones">
       <button class="principal" id="dejar" disabled>Dejarlo acá</button>
@@ -147,14 +145,13 @@ kbd { font-family: var(--serif); font-size: .85rem; border: 1px solid #3a3730; b
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
 <script type="module">
 import * as THREE from 'three';
-import { PLANTILLAS, PALABRAS, SEMILLAS } from './mensajes.js';
+import { LARGO, revisar, limpiar, oculto, SEMILLAS } from './mensajes.js';
 
 // Vacío = sin servidor: los mensajes quedan solo en este navegador.
 const API = '';
 
 const tactil = matchMedia('(pointer: coarse)').matches;
 const $ = (id) => document.getElementById(id);
-const frase = (m) => { const s = PLANTILLAS[m.t].replace('___', PALABRAS[m.w]); return s.replace(/^(¿?)(\p{L})/u, (_, a, b) => a + b.toUpperCase()); };
 
 // ---------- escena ----------
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -466,7 +463,7 @@ async function cargarMensajes() {
     } catch {}
   }
   if (!lista) lista = [...SEMILLAS, ...leer(LOCAL, [])];
-  lista.forEach(ponerMensaje);
+  lista.filter((m) => !oculto(m)).forEach(ponerMensaje);
 }
 cargarMensajes();
 
@@ -586,7 +583,8 @@ addEventListener('keydown', (e) => {
   if (!estado.jugando || estado.pausa) return;
   teclas.add(e.code);
   if (e.code === 'KeyE' && estado.enHoguera) descansar();
-  if (e.code === 'KeyR' && estado.cerca) valorar();
+  if (e.code === 'KeyR' && estado.cerca) votar('bueno');
+  if (e.code === 'KeyX' && estado.cerca) votar('malo');
   if (e.code === 'KeyM') abrirEscribir();
 });
 addEventListener('keyup', (e) => teclas.delete(e.code));
@@ -622,6 +620,7 @@ $('entrar').addEventListener('click', () => {
   $('escribir-btn').classList.remove('oculto');
   $('mira').classList.toggle('oculto', tactil);
   if (tactil) { $('tactil').classList.remove('oculto'); $('escribir-btn').textContent = 'Escribir'; }
+  else $('escribir-btn').innerHTML = '<kbd>M</kbd> Escribir un mensaje';
   bloquear();
 });
 if (tactil) $('teclas').innerHTML = '<span>pulgar izquierdo para caminar</span><span>derecho para mirar</span>';
@@ -719,22 +718,23 @@ function descansar() {
   }, primera ? 4200 : 3000);
 }
 
-// ---------- leer y valorar ----------
+// ---------- leer y votar ----------
 let votando = false;
-async function valorar() {
+async function votar(tipo) {
   const m = estado.cerca;
   const votados = leer(VOTADOS, []);
   if (!m || votados.includes(m.id) || votando) return;
   votando = true;
-  m.v = (m.v || 0) + 1;
+  if (tipo === 'bueno') m.v = (m.v || 0) + 1; else m.m = (m.m || 0) + 1;
   guardar(VOTADOS, [...votados, m.id]);
   mostrarMensaje(m, true);
   if (API && !String(m.id).startsWith('s')) {
-    try { await fetch(`${API}/mensajes/${m.id}/valorar`, { method: 'POST' }); } catch {}
+    try { await fetch(`${API}/mensajes/${m.id}/${tipo}`, { method: 'POST' }); } catch {}
   }
   votando = false;
 }
-$('valorar').addEventListener('click', valorar);
+$('bueno').addEventListener('click', () => votar('bueno'));
+$('malo').addEventListener('click', () => votar('malo'));
 
 let mostrado = null;
 function mostrarMensaje(m, forzar) {
@@ -742,54 +742,50 @@ function mostrarMensaje(m, forzar) {
   if (!m) { caja.classList.add('oculto'); mostrado = null; return; }
   if (mostrado === m && !forzar) return;
   mostrado = m;
-  caja.querySelector('.texto').textContent = frase(m);
+  caja.querySelector('.texto').textContent = m.txt;
   const v = m.v || 0;
   caja.querySelector('.votos').textContent = v ? `Valorado ${v} ${v === 1 ? 'vez' : 'veces'}` : 'Nadie lo valoró todavía';
   const ya = leer(VOTADOS, []).includes(m.id);
-  const b = $('valorar');
-  b.disabled = ya;
-  b.innerHTML = ya ? 'Ya lo valoraste' : (tactil ? 'Buen mensaje' : '<kbd>R</kbd> Buen mensaje');
+  $('bueno').disabled = $('malo').disabled = ya;
+  $('bueno').innerHTML = ya ? 'Ya votaste' : (tactil ? 'Buen mensaje' : '<kbd>R</kbd> Buen mensaje');
+  $('malo').innerHTML = tactil ? 'Mal mensaje' : '<kbd>X</kbd> Mal mensaje';
+  $('malo').classList.toggle('oculto', ya);
   caja.classList.remove('oculto');
 }
 
 // ---------- escribir ----------
-const elegido = { t: null, w: null };
-function armarListas() {
-  PLANTILLAS.forEach((p, i) => {
-    const b = document.createElement('button');
-    b.textContent = p; b.setAttribute('aria-pressed', 'false');
-    b.addEventListener('click', () => { elegido.t = i; refrescarVista(); });
-    $('plantillas').append(b);
-  });
-  PALABRAS.forEach((p, i) => {
-    const b = document.createElement('button');
-    b.textContent = p; b.setAttribute('aria-pressed', 'false');
-    b.addEventListener('click', () => { elegido.w = i; refrescarVista(); });
-    $('palabras').append(b);
-  });
+const MOTIVOS = {
+  corto: 'Escribí algo, aunque sea una palabra.',
+  largo: `Hasta ${LARGO} letras. Lo corto pesa más.`,
+  link: 'Sin links, mails ni teléfonos. Acá no se vende nada.',
+  repetido: 'Sin letras repetidas de más.',
+  insulto: 'El fuego no acepta insultos ni groserías. Probá decirlo de otra forma.',
+};
+function errorEscribir(texto) {
+  $('error').textContent = texto;
+  $('error').classList.toggle('oculto', !texto);
 }
-armarListas();
-function refrescarVista() {
-  [...$('plantillas').querySelectorAll('button')].forEach((b, i) => b.setAttribute('aria-pressed', String(i === elegido.t)));
-  [...$('palabras').querySelectorAll('button')].forEach((b, i) => b.setAttribute('aria-pressed', String(i === elegido.w)));
-  const p = elegido.t === null ? '___' : PLANTILLAS[elegido.t];
-  const w = elegido.w === null ? '<span class="hueco">___</span>' : PALABRAS[elegido.w];
-  $('vista').innerHTML = elegido.t === null && elegido.w === null
-    ? '<span class="hueco">Elegí una frase y una palabra</span>'
-    : p.replace('___', w).replace(/^___/, '<span class="hueco">___</span>');
-  $('dejar').disabled = elegido.t === null || elegido.w === null;
-}
+$('texto').addEventListener('input', () => {
+  const n = $('texto').value.length;
+  $('cuenta').textContent = `${n} / ${LARGO}`;
+  $('dejar').disabled = limpiar($('texto').value).length < 2;
+  errorEscribir('');
+});
+$('texto').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); if (!$('dejar').disabled) $('dejar').click(); }
+});
 function abrirEscribir() {
   if (estado.escribiendo || !estado.jugando) return;
   estado.escribiendo = true;
   teclas.clear();
   document.exitPointerLock?.();
-  elegido.t = elegido.w = null;
-  refrescarVista();
-  $('error').classList.add('oculto');
+  $('texto').value = '';
+  $('cuenta').textContent = `0 / ${LARGO}`;
+  $('dejar').disabled = true;
+  errorEscribir('');
   $('escribir').classList.remove('oculto');
   $('escribir-btn').classList.add('oculto');
-  $('plantillas').querySelector('button').focus();
+  setTimeout(() => $('texto').focus(), 50); // que la M no quede escrita
 }
 function cerrarEscribir() {
   estado.escribiendo = false;
@@ -800,20 +796,23 @@ function cerrarEscribir() {
 $('cancelar').addEventListener('click', cerrarEscribir);
 $('escribir-btn').addEventListener('click', abrirEscribir);
 $('dejar').addEventListener('click', async () => {
+  const txt = limpiar($('texto').value);
+  const motivo = revisar(txt);
+  if (motivo) return errorEscribir(MOTIVOS[motivo]);
   // un paso adelante de los pies, para que se vea al darse vuelta
   const x = +(jugador.x - Math.sin(jugador.yaw) * 1.1).toFixed(2);
   const z = +(jugador.z - Math.cos(jugador.yaw) * 1.1).toFixed(2);
-  let m = { id: 'l' + Date.now(), t: elegido.t, w: elegido.w, x, z, v: 0 };
+  let m = { id: 'l' + Date.now(), txt, x, z, v: 0, m: 0 };
   if (API) {
     $('dejar').disabled = true;
     try {
-      const r = await fetch(API + '/mensajes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: m.t, w: m.w, x, z }) });
+      const r = await fetch(API + '/mensajes', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ txt, x, z }) });
       if (r.status === 429) throw new Error('Dejaste uno hace muy poco. Esperá un minuto y probá de nuevo.');
+      if (r.status === 422) throw new Error(MOTIVOS[(await r.json()).error] ?? MOTIVOS.insulto);
       if (!r.ok) throw new Error('No se pudo guardar el mensaje. Probá de nuevo en un rato.');
       m = await r.json();
     } catch (err) {
-      $('error').textContent = err.message.startsWith('Dejaste') || err.message.startsWith('No se') ? err.message : 'No hay conexión. Probá de nuevo en un rato.';
-      $('error').classList.remove('oculto');
+      errorEscribir(err instanceof TypeError ? 'No hay conexión. Probá de nuevo en un rato.' : err.message);
       $('dejar').disabled = false;
       return;
     }
