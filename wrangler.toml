@@ -1,5 +1,11 @@
 name = "hoguera"
 main = "worker.js"
 compatibility_date = "2026-10-01"
-# id del namespace KV: se completa al crearlo (wrangler kv namespace create MSG)
-kv_namespaces = [{ binding = "MSG", id = "PENDIENTE" }]
+
+[[durable_objects.bindings]]
+name = "SALA"
+class_name = "Sala"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Sala"]

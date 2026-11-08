@@ -1,6 +1,6 @@
-// node prueba-worker.mjs — prueba el filtro y el worker con un KV de mentira
+// node --import ./prueba-cf.mjs prueba-worker.mjs — prueba el filtro y el worker con un KV de mentira
 import assert from 'node:assert';
-import w from './worker.js';
+import { atender } from './worker.js';
 import { revisar } from './mensajes.js';
 
 for (const ok of ['Probá saltar', 'Alabado sea el sol', 'Cuidado con el dragón putrefacto', 'Si tan solo tuviera un abrazo…'])
@@ -11,7 +11,7 @@ for (const [mal, motivo] of [['p', 'corto'], ['x'.repeat(101), 'largo'], ['entr�
 
 const kv = new Map();
 const env = { MSG: { get: async (k, t) => (kv.has(k) ? (t === 'json' ? JSON.parse(kv.get(k)) : kv.get(k)) : null), put: async (k, v) => kv.set(k, v) } };
-const pedir = (path, body, ip = '1.1.1.1') => w.fetch(new Request('https://x' + path, { method: body ? 'POST' : 'GET', headers: { 'cf-connecting-ip': ip, 'content-type': 'application/json' }, body: body && JSON.stringify(body) }), env);
+const pedir = (path, body, ip = '1.1.1.1') => atender(new Request('https://x' + path, { method: body ? 'POST' : 'GET', headers: { 'cf-connecting-ip': ip, 'content-type': 'application/json' }, body: body && JSON.stringify(body) }), env);
 
 assert.equal((await (await pedir('/mensajes')).json()).length, 8);
 const r = await pedir('/mensajes', { txt: '  Vos  podés ', x: 1, z: 2 });
